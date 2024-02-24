@@ -1,6 +1,6 @@
 # qr_code_scannner_generator
 
-A new Flutter project..
+A new Flutter project.
 
 ## Getting Started
 
