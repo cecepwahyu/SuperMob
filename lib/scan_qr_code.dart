@@ -1,9 +1,62 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:otp/otp.dart';
+import 'package:intl/intl.dart';
+import 'package:ntp/ntp.dart';
 import 'package:base32/base32.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+class Clock extends StatefulWidget {
+  @override
+  _ClockState createState() => _ClockState();
+}
+
+class _ClockState extends State<Clock> {
+  late String _timeString;
+  //late Timer _timer;
+
+  @override
+  void initState() {
+    _timeString = _formatDateTime(DateTime.now());
+    //_timer = Timer.periodic(Duration(seconds: 1), (Timer t) => _getTime());
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    //_timer.cancel();
+    super.dispose();
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    return DateFormat('hh:mm:ss').format(dateTime);
+  }
+
+  void _getTime() async {
+    try {
+      final DateTime now = await NTP.now();
+      final String formattedDateTime = _formatDateTime(now);
+      setState(() {
+        _timeString = formattedDateTime;
+      });
+    } catch (e) {
+      print("failed to get time: $e");
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      _timeString,
+      style: TextStyle(
+        fontSize: 50,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+  }
+}
 
 class ScanQRCode extends StatefulWidget {
   const ScanQRCode({Key? key}) : super(key: key);
@@ -13,68 +66,44 @@ class ScanQRCode extends StatefulWidget {
 }
 
 class _ScanQRCodeState extends State<ScanQRCode> {
-  String qrResult = 'Scanned Data will appear here';
-  String otpUrl = 'Scanned URL will appear here';
-  String qrCode2 = 'Scanned QRcode2 will appear here';
-  List<String> otpList = []; // List to store OTP codes
-  Timer? otpTimer; // Timer to update OTP
-  String? secretString; // Store the secret string
-
-  @override
-  void initState() {
-    super.initState();
-    otpTimer = Timer.periodic(Duration(seconds: 30), (timer) {
-      updateOTP();
-    });
-  }
+  String otpReveal = 'Scanned QRcode2 will appear here';
+  //Timer? otpTimer; // Timer to update OTP
 
   @override
   void dispose() {
-    otpTimer?.cancel(); // Cancel the timer when the widget is disposeddd
+    //otpTimer?.cancel(); // Cancel the timer when the widget is disposed
     super.dispose();
   }
 
-  Future<void> updateOTP() async {
-    if (secretString != null) {
-      // Generate the OTP
-      final otp = OTP.generateTOTPCodeString(
-          secretString!, DateTime.now().millisecondsSinceEpoch ~/ 1000,
-          algorithm: Algorithm.SHA1, interval: 30);
+  Future<String> fetchOTP() async {
+    try {
+      final response =
+          await http.get(Uri.parse('http://192.168.100.73:8080/generateOTP'));
 
-      setState(() {
-        this.qrResult = otp;
-        if (this.otpList.isEmpty) {
-          this.otpList.add(otp); // Add the OTP to the list if it's empty
-        } else {
-          this.otpList[this.otpList.length - 1] =
-              otp; // Replace the last OTP with the new one
-        }
-      });
+      if (response.statusCode == 200) {
+        // If the server returns a 200 OK response, then parse the JSON.
+        return jsonDecode(response.body)['otp'];
+      } else {
+        // If the server returns an unsuccessful response code, then throw an exception.
+        throw Exception('Failed to load OTP');
+      }
+    } catch (e) {
+      // Handle any errors that occur during the process.
+      throw Exception('Failed to fetch OTP: $e');
     }
   }
 
-  String decodeOtpUrl(String otpUrl) {
-    // Parse the otpauth:// URL
-    final uri = Uri.parse(otpUrl);
-
-    // Extract the secret key
-    final secret = uri.queryParameters['secret'];
-
-    if (secret == null) {
-      return 'QR code does not contain a secret key';
-    } else {
-      // Decode the secret key from Base32
-      final decodedSecret = base32.decode(secret);
-
-      // Convert the decoded secret back to a string
-      final secretString = base32.encode(decodedSecret);
-
-      // Generate the OTP
-      final otp = OTP.generateTOTPCodeString(
-          secretString, DateTime.now().millisecondsSinceEpoch ~/ 1000,
-          algorithm: Algorithm.SHA1, interval: 30, length: 6);
-
-      return otp;
+  Future<bool> canConnectToServer(String serverIp, int serverPort) async {
+    try {
+      final response = await http.get(Uri.http('$serverIp:$serverPort', '/'));
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      print('Failed to connect: $e');
+      return false;
     }
   }
 
@@ -84,36 +113,16 @@ class _ScanQRCodeState extends State<ScanQRCode> {
           '#ff6666', 'Cancel', true, ScanMode.QR);
       if (!mounted) return;
 
-      // Print the OTP link
-      setState(() {
-        otpUrl = qrCode;
-      });
-
-      setState(() {
-        qrCode2 = decodeOtpUrl(qrCode);
-      });
-
       // Parse the otpauth:// URL
       final uri = Uri.parse(qrCode);
 
-      // Extract the secret key
-      final secret = uri.queryParameters['secret'];
-
-      if (secret == null) {
-        setState(() {
-          qrResult = 'QR code does not contain a secret key';
-        });
-      } else {
-        // Decode the secret key from Base32
-        final decodedSecret = base32.decode(secret);
-
-        // Convert the decoded secret back to a string
-        secretString = base32.encode(decodedSecret);
-
-        updateOTP(); // Update OTP after scanning QR
-      }
-    } on PlatformException {
-      qrResult = 'Fail to read QR Code';
+      // Make a GET request to the Go server to get the OTP
+      final otp = await fetchOTP();
+      setState(() {
+        this.otpReveal = otp;
+      });
+    } catch (e) {
+      print('Error: $e');
     }
   }
 
@@ -128,45 +137,20 @@ class _ScanQRCodeState extends State<ScanQRCode> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              '$qrCode2',
+              otpReveal.isNotEmpty
+                  ? otpReveal
+                  : 'Scanned QRcode2 will appear here',
               style: TextStyle(color: Colors.black),
             ),
-            SizedBox(
-              height: 30,
-            ),
-            Text(
-              '$otpUrl',
-              style: TextStyle(color: Colors.black),
-            ),
-            SizedBox(
-              height: 30,
-            ),
-            Text(
-              '$qrResult',
-              style: TextStyle(color: Colors.black),
-            ),
-            SizedBox(
-              height: 30,
-            ),
+            Clock(),
             ElevatedButton(onPressed: scanQR, child: Text('Scan Code')),
             SizedBox(
               height: 30,
             ),
-            Expanded(
-              child: ListView.builder(
-                itemCount: otpList.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text(
-                      otpList[index],
-                      style: TextStyle(
-                        fontSize: 40,
-                        color: Color.fromARGB(255, 125, 125, 125),
-                      ),
-                    ),
-                  );
-                },
-              ),
+            Clock(),
+            ElevatedButton(onPressed: scanQR, child: Text('Scan Code')),
+            SizedBox(
+              height: 30,
             ),
           ],
         ),

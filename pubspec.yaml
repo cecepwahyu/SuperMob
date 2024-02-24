@@ -30,6 +30,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  intl: ^0.17.0
+  ntp: ^2.0.0
+  http: ^1.2.1
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -39,7 +42,6 @@ dependencies:
   flutter_barcode_scanner: ^2.0.0
   otp: ^3.1.4
   base32: ^2.1.0
-  # dart_otp: ^1.1.0
 
 dev_dependencies:
   flutter_test:

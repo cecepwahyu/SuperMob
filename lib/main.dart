@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:qr_code_scannner_generator/generate_qr_code.dart';
 import 'package:qr_code_scannner_generator/scan_qr_code.dart';
+import 'package:otp/otp.dart';
 
 void main() {
   runApp(const MyApp());
@@ -28,11 +29,22 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  String otpCode = '';
+
+  @override
+  void initState() {
+    super.initState();
+    otpCode = OTP.generateTOTPCodeString("JBSWY3DPEHPK3PXP", 1362302550000);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('BPD Authenticator'),
+        foregroundColor: Color(0xFFFFFFFF),
+        backgroundColor: Color(0xFF273AE9),
+        titleTextStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
       ),
       body: Center(
           child: Column(
@@ -53,9 +65,19 @@ class _HomePageState extends State<HomePage> {
                       builder: (context) => GenerateQRCode()));
                 });
               },
-              child: Text('Generate QR Code'))
+              child: Text('Generate QR Code')),
+          ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  Navigator.of(context)
+                      .push(MaterialPageRoute(builder: (context) => MyApp()));
+                });
+              },
+              child: Text('Scan QR Code2')),
+          Text('OTP Code: $otpCode')
         ],
       )),
+      backgroundColor: Color(0xFFF6F9FC),
     );
   }
 }
