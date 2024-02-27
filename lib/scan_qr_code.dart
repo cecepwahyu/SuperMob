@@ -36,7 +36,7 @@ class _ClockState extends State<Clock> {
   void _getTime() async {
     try {
       final response =
-          await http.get(Uri.parse('http://192.168.100.73:8080/time'));
+          await http.get(Uri.parse('http://10.91.6.233:8080/time'));
       if (response.statusCode == 200) {
         final timeMap = jsonDecode(response.body);
         final String serverTime = timeMap['time'];
@@ -99,7 +99,7 @@ class _ScanQRCodeState extends State<ScanQRCode> {
   Future<String> fetchOTP() async {
     try {
       final response =
-          await http.get(Uri.parse('http://192.168.100.73:8080/generateOTP'));
+          await http.get(Uri.parse('http://10.91.6.233:8080/generateOTP'));
 
       if (response.statusCode == 200) {
         // If the server returns a 200 OK response, then parse the JSON.
@@ -117,7 +117,7 @@ class _ScanQRCodeState extends State<ScanQRCode> {
   Future<void> fetchNewOTP() async {
     try {
       final response =
-          await http.get(Uri.parse('http://192.168.100.73:8080/generateOTP'));
+          await http.get(Uri.parse('localhost:8080/generateOTP'));
 
       if (response.statusCode == 200) {
         // If the server returns a 200 OK response, then parse the JSON.
