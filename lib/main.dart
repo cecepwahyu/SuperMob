@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -13,6 +14,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:http/http.dart' as http;
 import 'package:circular_countdown_timer/circular_countdown_timer.dart';
+import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 
 void main() {
   runApp(const MyApp());
@@ -71,7 +73,7 @@ class _ClockState extends State<Clock> {
   void _getTime() async {
     try {
       final response =
-      await http.get(Uri.parse('http://10.91.6.84:8080/time'));
+      await http.get(Uri.parse('http://192.168.100.73:8080/time'));
       if (response.statusCode == 200) {
         final timeMap = jsonDecode(response.body);
         final String serverTime = timeMap['time'];
@@ -90,7 +92,7 @@ class _ClockState extends State<Clock> {
   Widget build(BuildContext context) {
     return Text(
       _timeString ?? 'Loading...',
-      style: TextStyle(
+      style: const TextStyle(
         fontSize: 50,
         fontWeight: FontWeight.bold,
       ),
@@ -150,7 +152,6 @@ class _HomePageState extends State<HomePage> {
       ),
       body: Stack(
         children: [
-
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -173,257 +174,209 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                       ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
+
+                      Stack(
+                        alignment: Alignment.center,
                         children: [
-                          Padding(
-                            padding: EdgeInsets.all(20), // Adjust the padding values as needed
-                            child: Container(
-                              width: double.infinity,
-                              height: 150,
-                              decoration: BoxDecoration(
-                                color: Colors.white, // Change the color as needed
-                                borderRadius: BorderRadius.circular(10), // Adjust the border radius as needed
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.withOpacity(0.1), // Set shadow color
-                                    spreadRadius: 1, // Set spread radius
-                                    blurRadius: 2, // Set blur radius
-                                    offset: Offset(0, 5), // Set offset
-                                  ),
-                                ],
-                              ),
-                              child: Padding(
-                                padding: EdgeInsets.all(20.0), // Add padding to the text
-                                child: Align(
-                                  alignment: Alignment.topLeft, // Align text to the top-left corner
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start, // Align text to the left
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                issuerReveal, // Change the text content as needed
-                                                style: const TextStyle(
-                                                  color: Colors.black, // Set text color
-                                                  fontSize: 20, // Set text size
-                                                  fontWeight: FontWeight.bold, // Set text weight
-                                                ),
-                                              ),
-                                              SizedBox(height: 4), // Add space between the texts
-                                              Text(
-                                                accountReveal, // Add your second text content here
-                                                style: const TextStyle(
-                                                  color: Colors.black, // Set text color
-                                                  fontSize: 14, // Set text size
-                                                  fontWeight: FontWeight.w100,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          Spacer(), // Add a spacer to push the circle to the right
-                                          Text(_timeString, style: TextStyle(fontSize: 20.0, color: Color(0xFF33368F), fontWeight: FontWeight.bold,),)
-                                          // CircularCountDownTimer(
-                                          //   duration: _timeString, // Parse _timeString into an integer or default to 0 if parsing fails
-                                          //   width: 40,
-                                          //   height: 40,
-                                          //   ringColor: Colors.grey,
-                                          //   fillColor: Color(0xFF33368F),
-                                          //   backgroundColor: Colors.transparent,
-                                          //   strokeWidth: 5.0,
-                                          //   strokeCap: StrokeCap.round,
-                                          //   textStyle: const TextStyle(
-                                          //     fontSize: 20.0,
-                                          //     color: Color(0xFF33368F),
-                                          //     fontWeight: FontWeight.bold,
-                                          //   ),
-                                          //   textFormat: CountdownTextFormat.S,
-                                          //   isReverse: true,
-                                          //   isReverseAnimation: false,
-                                          //   isTimerTextShown: true,
-                                          //   autoStart: true,
-                                          //   // onComplete: () {
-                                          //   //   // Restart the countdown when it reaches 0
-                                          //   //   setState(() {
-                                          //   //     // You can adjust the initialDuration here if needed
-                                          //   //     initialDuration = int.tryParse(_timeString) ?? 0;
-                                          //   //   });
-                                          //   // },
-                                          // ),
-
-
-
-                                        ],
-                                      ),
-
-                                      SizedBox(height: 10), // Add space between the texts
-                                      Row(
-                                        children: [
-                                          for (int i = 0; i < otpReveal.length; i++)
-                                            Padding(
-                                              padding: const EdgeInsets.symmetric(horizontal: 8), // Adjust horizontal padding as needed
-                                              child: Container(
-                                                constraints: const BoxConstraints(
-                                                  minWidth: 25, // Set the minimum width of the rectangle
-                                                  minHeight: 25, // Set the minimum height of the rectangle
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: Color(0xFFEDF5FF),
-                                                  borderRadius: BorderRadius.circular(5),
-                                                ),
-                                                child: Padding(
-                                                  padding: const EdgeInsets.all(8), // Adjust padding as needed
-                                                  child: Align(
-                                                    alignment: Alignment.center,
-                                                    child: Text(
-                                                      otpReveal[i],
+                          otpReveal.isNotEmpty
+                              ? Column(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding: EdgeInsets.all(20), // Adjust the padding values as needed
+                                  child: Container(
+                                    width: double.infinity,
+                                    height: 150,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white, // Change the color as needed
+                                      borderRadius: BorderRadius.circular(10), // Adjust the border radius as needed
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.grey.withOpacity(0.1), // Set shadow color
+                                          spreadRadius: 1, // Set spread radius
+                                          blurRadius: 2, // Set blur radius
+                                          offset: Offset(0, 5), // Set offset
+                                        ),
+                                      ],
+                                    ),
+                                    child: Padding(
+                                      padding: EdgeInsets.all(20.0), // Add padding to the text
+                                      child: Align(
+                                        alignment: Alignment.topLeft, // Align text to the top-left corner
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start, // Align text to the left
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      issuerReveal, // Change the text content as needed
                                                       style: const TextStyle(
-                                                        color: Color(0xFF33368F),
-                                                        fontSize: 18,
-                                                        fontWeight: FontWeight.bold,
+                                                        color: Colors.black, // Set text color
+                                                        fontSize: 20, // Set text size
+                                                        fontWeight: FontWeight.bold, // Set text weight
+                                                      ),
+                                                    ),
+                                                    SizedBox(height: 4), // Add space between the texts
+                                                    Text(
+                                                      accountReveal, // Add your second text content here
+                                                      style: const TextStyle(
+                                                        color: Colors.black, // Set text color
+                                                        fontSize: 14, // Set text size
+                                                        fontWeight: FontWeight.w100,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                Spacer(), // Add a spacer to push the circle to the right
+                                                Text(_timeString,
+                                                  style: const TextStyle(
+                                                    fontSize: 20.0,
+                                                    color: Color(0xFF33368F),
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+
+                                            SizedBox(height: 10), // Add space between the texts
+                                            Row(
+                                              children: [
+                                                for (int i = 0; i < otpReveal.length; i++)
+                                                  Padding(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 8), // Adjust horizontal padding as needed
+                                                    child: Container(
+                                                      constraints: const BoxConstraints(
+                                                        minWidth: 25, // Set the minimum width of the rectangle
+                                                        minHeight: 25, // Set the minimum height of the rectangle
+                                                      ),
+                                                      decoration: BoxDecoration(
+                                                        color: const Color(0xFFEDF5FF),
+                                                        borderRadius: BorderRadius.circular(5),
+                                                      ),
+                                                      child: Padding(
+                                                        padding: const EdgeInsets.all(8), // Adjust padding as needed
+                                                        child: Align(
+                                                          alignment: Alignment.center,
+                                                          child: Text(
+                                                            otpReveal[i],
+                                                            style: const TextStyle(
+                                                              color: Color(0xFF33368F),
+                                                              fontSize: 18,
+                                                              fontWeight: FontWeight.bold,
+                                                            ),
+                                                          ),
+                                                        ),
                                                       ),
                                                     ),
                                                   ),
-                                                ),
-                                              ),
+                                              ],
                                             ),
-                                        ],
-                                      ),
 
-                                    ],
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                )
+
+
+                              ]
+                          )
+                              : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Lottie.asset(
+                                Assets.json.placeholder,
+                                width: 250,
+                                height: 300,
+                              ),
+                              const Padding(
+                                padding: EdgeInsets.all(20),
+                                child: Text(
+                                  'Add 2FA Code',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ),
-                            ),
-                          )
-
-
-                        ]
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 60),
+                                child: Text(
+                                  'Now you can add Two-Factor authentication to protect your online accounts.',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 13,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              const SizedBox(height: 30), // Adjust height as needed
+                            ],
+                          ),
+                        ],
                       )
-                      // Stack(
-                      //   alignment: Alignment.center,
-                      //   children: [
-                      //     otpReveal.isNotEmpty
-                      //         ? Padding(
-                      //       padding: const EdgeInsets.symmetric(vertical: 30),
-                      //       child: Text(
-                      //         otpReveal,
-                      //         style: TextStyle(color: Colors.black),
-                      //       ),
-                      //     )
-                      //         : Column(
-                      //       mainAxisAlignment: MainAxisAlignment.center,
-                      //       children: [
-                      //         Lottie.asset(
-                      //           Assets.json.placeholder,
-                      //           width: 250,
-                      //           height: 300,
-                      //         ),
-                      //         const Padding(
-                      //           padding: EdgeInsets.all(20),
-                      //           child: Text(
-                      //             'Add 2FA Code',
-                      //             style: TextStyle(
-                      //               color: Colors.black,
-                      //               fontSize: 15,
-                      //               fontWeight: FontWeight.bold,
-                      //             ),
-                      //           ),
-                      //         ),
-                      //         const Padding(
-                      //           padding: EdgeInsets.symmetric(horizontal: 60),
-                      //           child: Text(
-                      //             'Now you can add Two-Factor authentication to protect your online accounts.',
-                      //             style: TextStyle(
-                      //               color: Colors.grey,
-                      //               fontSize: 13,
-                      //             ),
-                      //             textAlign: TextAlign.center,
-                      //           ),
-                      //         ),
-                      //         const SizedBox(height: 30), // Adjust height as needed
-                      //       ],
-                      //     ),
-                      //   ],
-                      // )
-
-
                     ],
                   ),
                 ),
               ],
             ),
           ),
-          Container(
-            color: !showAdditionalButtons
-                ? Colors.black.withOpacity(0.7)
-                : Colors.transparent,
-            width: double.infinity,
-            height: double.infinity,
-          ),
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              Positioned(
-                bottom: 20, // Adjust this value to set the distance from the bottom
-                left: 0,
-                right: 0,
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        showAdditionalButtons = !showAdditionalButtons;
-                        isButtonRotated = !isButtonRotated; // Toggle rotation state
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      shape: const CircleBorder(),
-                      padding: const EdgeInsets.all(20),
-                      backgroundColor: const Color(0xFF33368F),
-                      foregroundColor: Colors.white,
-                    ),
-                    child: Transform.rotate(
-                      angle: isButtonRotated ? 0.8 : 0, // Rotate if isButtonRotated is true
-                      child: const Icon(Icons.add, color: Colors.white),
-                    ),
-                  ),
+        ],
+      ),
+      floatingActionButtonLocation: ExpandableFab.location,
+      floatingActionButton: ExpandableFab(
+        type: ExpandableFabType.up,
+        overlayStyle: ExpandableFabOverlayStyle(
+          blur: 1.0,
+        ),
+        children: [
+          GestureDetector(
+            onTap: () {
+              // Your action when the text button is tapped
+              scanQR();
+            },
+            child: Row(
+              children: [
+                Text('Scan QR'), // Text to display
+                SizedBox(width: 8), // Adjust spacing between text and icon
+                FloatingActionButton.small(
+                  heroTag: null,
+                  child: const Icon(Icons.camera),
+                  onPressed: () {
+                    scanQR();
+                  },
                 ),
-              ),
-              if (!showAdditionalButtons)
-                Positioned(
-                  bottom: 130, // Adjust this value to set the distance from the top of the button
-                  left: 0,
-                  right: 0,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          // Handle onPressed for first additional button
-                          scanQR();
-                        },
-                        child: const Text('Scan QR Code', style: TextStyle(fontWeight: FontWeight.bold),),
-                      ),
-                      const SizedBox(width: 20), // Add some space between the buttons
-                      ElevatedButton(
-                        onPressed: () {
-                          // Handle onPressed for second additional button
-                        },
-                        child: const Text('Load QR from Image', style: TextStyle(fontWeight: FontWeight.bold),),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
+              ],
+            ),
           ),
+          GestureDetector(
+            onTap: () {
 
+            },
+            child: Row(
+              children: [
+                Text('Attach File'), // Text to display
+                SizedBox(width: 8), // Adjust spacing between text and icon
+                FloatingActionButton.small(
+                  heroTag: null,
+                  child: const Icon(Icons.attach_file_outlined),
+                  onPressed: () {
+
+                  },
+                ),
+              ],
+            ),
+          ),
 
         ],
       ),
+
+
       backgroundColor: Color(0xFFF6F9FC),
     );
   }
@@ -449,7 +402,7 @@ class _HomePageState extends State<HomePage> {
 
   void _fetchTime() async {
     try {
-      final response = await http.get(Uri.parse('http://10.91.6.84:8080/time'));
+      final response = await http.get(Uri.parse('http://192.168.100.73:8080/time'));
       if (response.statusCode == 200) {
         final timeMap = jsonDecode(response.body);
         final String serverTime = timeMap['time'];
@@ -487,13 +440,10 @@ class _HomePageState extends State<HomePage> {
   }
 
 
-
-
-
   Future<Map<String, dynamic>> fetchOTP() async {
     try {
       final response =
-      await http.get(Uri.parse('http://10.91.6.84:8080/generateOTP'));
+      await http.get(Uri.parse('http://192.168.100.73:8080/generateOTP'));
 
       if (response.statusCode == 200) {
         // If the server returns a 200 OK response, then parse the JSON.
@@ -516,7 +466,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> fetchNewOTP() async {
     try {
       final response =
-      await http.get(Uri.parse('http://10.91.6.84:8080/generateOTP'));
+      await http.get(Uri.parse('http://192.168.100.73:8080/generateOTP'));
 
       if (response.statusCode == 200) {
         // If the server returns a 200 OK response, then parse the JSON.
@@ -551,8 +501,6 @@ class _HomePageState extends State<HomePage> {
       final otp = await fetchOTP();
       setState(() {
         this.otpReveal = otp as String;
-        showAdditionalButtons = true; // Close the additional buttons after successful scan
-        isButtonRotated = false;
       });
       // Print the value of otpReveal
       print('OTP Revealed: $otpReveal');

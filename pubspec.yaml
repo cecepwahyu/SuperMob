@@ -47,6 +47,7 @@ dependencies:
   base32: ^2.1.0
   circular_countdown_timer: ^0.2.3
   google_fonts: ^6.1.0
+  flutter_expandable_fab: ^2.0.0
 
 dev_dependencies:
   flutter_test:
