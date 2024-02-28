@@ -117,7 +117,7 @@ class _ScanQRCodeState extends State<ScanQRCode> {
   Future<void> fetchNewOTP() async {
     try {
       final response =
-          await http.get(Uri.parse('localhost:8080/generateOTP'));
+          await http.get(Uri.parse('http://10.91.6.233:8080/generateOTP'));
 
       if (response.statusCode == 200) {
         // If the server returns a 200 OK response, then parse the JSON.

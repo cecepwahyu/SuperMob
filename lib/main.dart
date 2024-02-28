@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:qr_code_scannner_generator/generate_qr_code.dart';
 import 'package:qr_code_scannner_generator/scan_qr_code.dart';
 import 'package:otp/otp.dart';
@@ -40,12 +42,73 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
+class Clock extends StatefulWidget {
+  @override
+  _ClockState createState() => _ClockState();
+}
+
+class _ClockState extends State<Clock> {
+  late String _timeString;
+
+  @override
+  void initState() {
+    super.initState();
+    _getTime(); // Fetch time when widget initializes
+    // Update time every second
+    Timer.periodic(Duration(seconds: 1), (Timer t) => _getTime());
+  }
+
+  @override
+  void dispose() {
+    //_timer.cancel();
+    super.dispose();
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    return DateFormat('hh:mm:ss').format(dateTime);
+  }
+
+  void _getTime() async {
+    try {
+      final response =
+      await http.get(Uri.parse('http://10.91.6.84:8080/time'));
+      if (response.statusCode == 200) {
+        final timeMap = jsonDecode(response.body);
+        final String serverTime = timeMap['time'];
+        setState(() {
+          _timeString = serverTime;
+        });
+      } else {
+        throw Exception('Failed to load time');
+      }
+    } catch (e) {
+      print("Failed to get time: $e");
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      _timeString ?? 'Loading...',
+      style: TextStyle(
+        fontSize: 50,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+  }
+}
+
 class _HomePageState extends State<HomePage> {
   String otpCode = '';
   bool showAdditionalButtons = true;
   bool isButtonRotated = false; // Keep track of the rotation state
   String otpReveal = '';
+  String accountReveal = '';
+  String issuerReveal = '';
   int initialDuration = 0;
+  Timer? otpTimer; // Timer to update OTP
+  late String _timeString = ''; // Initialize _timeString with an empty string
+  late Timer _timer;
 
   @override
   Widget build(BuildContext context) {
@@ -143,8 +206,8 @@ class _HomePageState extends State<HomePage> {
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                'BPD DIY', // Change the text content as needed
-                                                style: TextStyle(
+                                                issuerReveal, // Change the text content as needed
+                                                style: const TextStyle(
                                                   color: Colors.black, // Set text color
                                                   fontSize: 20, // Set text size
                                                   fontWeight: FontWeight.bold, // Set text weight
@@ -152,8 +215,8 @@ class _HomePageState extends State<HomePage> {
                                               ),
                                               SizedBox(height: 4), // Add space between the texts
                                               Text(
-                                                'user@bpddiy.co.id', // Add your second text content here
-                                                style: TextStyle(
+                                                accountReveal, // Add your second text content here
+                                                style: const TextStyle(
                                                   color: Colors.black, // Set text color
                                                   fontSize: 14, // Set text size
                                                   fontWeight: FontWeight.w100,
@@ -162,35 +225,35 @@ class _HomePageState extends State<HomePage> {
                                             ],
                                           ),
                                           Spacer(), // Add a spacer to push the circle to the right
-                                          CircularCountDownTimer(
-                                            duration: 30,
-                                            initialDuration: initialDuration,
-                                            // controller: CountDownController(), // You can remove the controller
-                                            width: 50,
-                                            height: 50,
-                                            ringColor: Colors.grey,
-                                            fillColor: Color(0xFF33368F),
-                                            backgroundColor: Colors.transparent,
-                                            strokeWidth: 5.0,
-                                            strokeCap: StrokeCap.round,
-                                            textStyle: const TextStyle(
-                                              fontSize: 20.0,
-                                              color: Color(0xFF33368F),
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                            textFormat: CountdownTextFormat.S,
-                                            isReverse: true, // Set isReverse to true to count down from duration to 0
-                                            isReverseAnimation: false,
-                                            isTimerTextShown: true,
-                                            autoStart: true, // Set autoStart to true to start the countdown automatically
-                                            onComplete: () {
-                                              // Restart the countdown when it reaches 0
-                                              // Set the initial duration back to 30
-                                              setState(() {
-                                                initialDuration = 0;
-                                              });
-                                            },
-                                          ),
+                                          Text(_timeString, style: TextStyle(fontSize: 20.0, color: Color(0xFF33368F), fontWeight: FontWeight.bold,),)
+                                          // CircularCountDownTimer(
+                                          //   duration: _timeString, // Parse _timeString into an integer or default to 0 if parsing fails
+                                          //   width: 40,
+                                          //   height: 40,
+                                          //   ringColor: Colors.grey,
+                                          //   fillColor: Color(0xFF33368F),
+                                          //   backgroundColor: Colors.transparent,
+                                          //   strokeWidth: 5.0,
+                                          //   strokeCap: StrokeCap.round,
+                                          //   textStyle: const TextStyle(
+                                          //     fontSize: 20.0,
+                                          //     color: Color(0xFF33368F),
+                                          //     fontWeight: FontWeight.bold,
+                                          //   ),
+                                          //   textFormat: CountdownTextFormat.S,
+                                          //   isReverse: true,
+                                          //   isReverseAnimation: false,
+                                          //   isTimerTextShown: true,
+                                          //   autoStart: true,
+                                          //   // onComplete: () {
+                                          //   //   // Restart the countdown when it reaches 0
+                                          //   //   setState(() {
+                                          //   //     // You can adjust the initialDuration here if needed
+                                          //   //     initialDuration = int.tryParse(_timeString) ?? 0;
+                                          //   //   });
+                                          //   // },
+                                          // ),
+
 
 
                                         ],
@@ -203,7 +266,7 @@ class _HomePageState extends State<HomePage> {
                                             Padding(
                                               padding: const EdgeInsets.symmetric(horizontal: 8), // Adjust horizontal padding as needed
                                               child: Container(
-                                                constraints: BoxConstraints(
+                                                constraints: const BoxConstraints(
                                                   minWidth: 25, // Set the minimum width of the rectangle
                                                   minHeight: 25, // Set the minimum height of the rectangle
                                                 ),
@@ -217,7 +280,7 @@ class _HomePageState extends State<HomePage> {
                                                     alignment: Alignment.center,
                                                     child: Text(
                                                       otpReveal[i],
-                                                      style: TextStyle(
+                                                      style: const TextStyle(
                                                         color: Color(0xFF33368F),
                                                         fontSize: 18,
                                                         fontWeight: FontWeight.bold,
@@ -365,14 +428,81 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Future<String> fetchOTP() async {
+  @override
+  void initState() {
+    super.initState();
+    // Start the timer when the widget is initialized
+    startTimer();
+    _fetchTime(); // Fetch time when widget initializes
+    // Update time every second
+    _timer = Timer.periodic(Duration(seconds: 1), (Timer t) => _fetchTime());
+  }
+
+  void startTimer() {
+    // Update the OTP immediately
+    fetchNewOTP();
+    // Schedule the subsequent fetches every second
+    otpTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      fetchNewOTP();
+    });
+  }
+
+  void _fetchTime() async {
+    try {
+      final response = await http.get(Uri.parse('http://10.91.6.84:8080/time'));
+      if (response.statusCode == 200) {
+        final timeMap = jsonDecode(response.body);
+        final String serverTime = timeMap['time'];
+
+        // Split the time string by ":" to get individual components
+        List<String> timeComponents = serverTime.split(':');
+
+        // Extract only the seconds part (the third component)
+        String seconds = timeComponents.length >= 3 ? timeComponents[2] : '';
+
+        // Remove any timezone information
+        if (seconds.contains('+')) {
+          seconds = seconds.substring(0, seconds.indexOf('+'));
+        }
+
+        // Parse seconds value and ensure it's not null
+        int? parsedSeconds = int.tryParse(seconds);
+        int reversedSeconds = 30; // Start the counter from 30
+
+        if (parsedSeconds != null) {
+          // Reverse the seconds count
+          reversedSeconds = 30 - (parsedSeconds % 30);
+        }
+
+        // Update the state with the reversed seconds
+        setState(() {
+          _timeString = reversedSeconds.toString();
+        });
+      } else {
+        throw Exception('Failed to load time');
+      }
+    } catch (e) {
+      print("Failed to get time: $e");
+    }
+  }
+
+
+
+
+
+  Future<Map<String, dynamic>> fetchOTP() async {
     try {
       final response =
       await http.get(Uri.parse('http://10.91.6.84:8080/generateOTP'));
 
       if (response.statusCode == 200) {
         // If the server returns a 200 OK response, then parse the JSON.
-        return jsonDecode(response.body)['otp'];
+        var jsonResponse = jsonDecode(response.body);
+        return {
+          'otp': jsonResponse['otp'],
+          'accountName': jsonResponse['accountName'],
+          'issuerName': jsonResponse['issuerName'],
+        };
       } else {
         // If the server returns an unsuccessful response code, then throw an exception.
         throw Exception('Failed to load OTP');
@@ -380,6 +510,31 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       // Handle any errors that occur during the process.
       throw Exception('Failed to fetch OTP: $e');
+    }
+  }
+
+  Future<void> fetchNewOTP() async {
+    try {
+      final response =
+      await http.get(Uri.parse('http://10.91.6.84:8080/generateOTP'));
+
+      if (response.statusCode == 200) {
+        // If the server returns a 200 OK response, then parse the JSON.
+        final newOTP = jsonDecode(response.body)['otp'];
+        final newAccount = jsonDecode(response.body)['accountName'];
+        final newIssuer = jsonDecode(response.body)['issuerName'];
+        setState(() {
+          otpReveal = newOTP; // Update the OTP
+          accountReveal = newAccount; // Update the OTP
+          issuerReveal = newIssuer; // Update the OTP
+        });
+      } else {
+        // If the server returns an unsuccessful response code, then throw an exception.
+        throw Exception('Failed to load OTP');
+      }
+    } catch (e) {
+      // Handle any errors that occur during the process.
+      print('Failed to fetch new OTP: $e');
     }
   }
 
@@ -395,7 +550,7 @@ class _HomePageState extends State<HomePage> {
       // Make a GET request to the Go server to get the OTP
       final otp = await fetchOTP();
       setState(() {
-        this.otpReveal = otp;
+        this.otpReveal = otp as String;
         showAdditionalButtons = true; // Close the additional buttons after successful scan
         isButtonRotated = false;
       });
